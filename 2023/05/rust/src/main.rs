@@ -85,6 +85,7 @@ fn main() {
 
     let mut c_seed = 0usize;
     let m_seed = seeds.len();
+    let mut progress = format!("{:.2}", 0f64);
 
     for seed in seeds {
         let mut path: Vec<u32> = Vec::new();
@@ -112,13 +113,13 @@ fn main() {
         min_final = min(min_final, *path.last().unwrap());
 
         c_seed += 1;
-        print!(
-            "\r{} / {} {:.3}",
-            c_seed,
-            m_seed,
-            c_seed as f64 / m_seed as f64
-        );
-        io::stdout().flush().unwrap();
+        let n_progress = format!("{:.2}", c_seed as f64 / m_seed as f64);
+
+        if progress != n_progress {
+            progress = n_progress;
+            print!("\r{} / {} {}", c_seed, m_seed, progress);
+            io::stdout().flush().unwrap();
+        }
     }
 
     println!("\n{}", min_final);
