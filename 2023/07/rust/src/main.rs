@@ -37,24 +37,13 @@ fn get_cards_count(cards: &String, joker: bool) -> String {
             j_v = *j;
             card_count.remove(&'J');
         }
-        if let Some((m_i, _)) = card_count.iter().max() {
+        if let Some((m_i, _)) = card_count.iter().max_by_key(|(_, v)| *v) {
             card_count.entry(*m_i).and_modify(|e| *e += j_v);
         }
     }
 
     let mut values: Vec<u32> = card_count.values().cloned().collect();
     values.sort();
-
-    // if joker && card_count.len() > 1 {
-    //     if let Some(j) = card_count.get(&'J') {
-    //         if let Some(v) = values.pop() {
-    //             values.push(v + j);
-    //             if let Some(i) = values.iter().position(|x| x == j) {
-    //                 values.remove(i);
-    //             }
-    //         }
-    //     }
-    // }
 
     let t_str: String = values.iter().map(|v| v.to_string()).collect();
 
@@ -65,7 +54,7 @@ fn get_hand_type(cards: &String, joker: bool) -> HandType {
     use HandType::*;
 
     let cards_count = get_cards_count(cards, joker);
-    println!("{} - {:?}", cards, cards_count);
+    // println!("{} - {:?}", cards, cards_count);
 
     match cards_count.as_str() {
         "5" => FiveKind,
