@@ -1,8 +1,28 @@
 use std::{
-    borrow::BorrowMut,
-    collections::{HashMap, HashSet},
+    collections::{HashMap, VecDeque},
     io::{self, BufRead},
 };
+
+struct Queue<T> {
+    items: VecDeque<T>,
+}
+
+impl<T> Queue<T> {
+    pub fn new() -> Self {
+        Self {
+            items: VecDeque::new(),
+        }
+    }
+    pub fn add(&mut self, x: T) {
+        self.items.push_back(x);
+    }
+    pub fn get(&mut self) -> Option<T> {
+        self.items.pop_front()
+    }
+    pub fn is_empty(&mut self) -> bool {
+        self.items.len() == 0
+    }
+}
 
 #[derive(Debug, Clone)]
 struct Node {
@@ -38,16 +58,57 @@ fn print_map(map: &HashMap<(usize, usize), Node>) {
     }
 }
 
+fn print_map_distances(map: &HashMap<(usize, usize), Node>) {
+    let mut y = 0usize;
+    let mut x = 0usize;
+
+    while let Some(n) = map.get(&(x, y)) {
+        print!("{}", n.d);
+        x += 1;
+        if map.get(&(x, y)).is_none() {
+            println!("");
+            x = 0;
+            y += 1;
+        }
+    }
+}
+
+fn visit_node(queue: &mut Queue<(usize, usize, u32)>, map: &mut HashMap<(usize, usize), Node>) {
+    let t = queue.get();
+    if t.is_none() {
+        return;
+    }
+
+    let (x, y, d) = t.unwrap();
+
+    if let Some(node) = map.get_mut(&(x, y)) {
+        if node.v {
+            return;
+        }
+
+        node.v = true;
+        node.d = d;
+
+        for (x, y) in &node.n {
+            queue.add((*x, *y, d + 1));
+        }
+    }
+}
+
 fn main() {
+    let mut start_node = (0usize, 0usize);
     let mut map = HashMap::<(usize, usize), Node>::new();
     for (y, line) in io::stdin().lock().lines().enumerate() {
         for (x, c) in line.expect("Error parsing line").char_indices() {
             map.insert((x, y), Node::new(c));
+            if c == 'S' {
+                start_node = (x, y);
+            }
         }
     }
 
     // println!("{:?}", &map);
-    print_map(&map);
+    // print_map(&map);
 
     let mut ns: HashMap<(usize, usize), Vec<(usize, usize)>> = HashMap::new();
     for ((x, y), n) in &map {
@@ -102,14 +163,28 @@ fn main() {
 
     for ((x, y), ns) in &ns {
         if let Some(n) = map.get_mut(&(*x, *y)) {
-            if ns.len() < 2 {
+            for (tx, ty) in ns {
+                if let Some(i) = n.n.iter().position(|(x, y)| tx == x && ty == y) {
+                    n.n.remove(i);
+                }
+            }
+            if n.n.len() < 2 {
                 n.pipe = '.'
-            } else {
-                n.n = ns.clone();
             }
         }
     }
 
     // println!("{:?}", &map);
-    print_map(&map);
+    // print_map_distances(&map);
+
+    let mut queue = Queue::<(usize, usize, u32)>::new();
+    queue.add((start_node.0, start_node.1, 0));
+    while !queue.is_empty() {
+        visit_node(&mut queue, &mut map);
+    }
+    // print_map_distances(&map);
+
+    let max_d = map.values().map(|n| n.d).max();
+
+    println!("{:?}", max_d.unwrap());
 }
