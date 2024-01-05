@@ -29,6 +29,7 @@ struct Node {
     pipe: char,
     v: bool,
     d: u32,
+    inside: Option<bool>,
     n: Vec<(usize, usize)>,
 }
 
@@ -38,12 +39,15 @@ impl Node {
             pipe: c,
             v: false,
             d: 0,
+            inside: None,
             n: vec![],
         }
     }
 }
 
-fn print_map(map: &HashMap<(usize, usize), Node>) {
+type NodeMap = HashMap<(usize, usize), Node>;
+
+fn _print_map(map: &NodeMap) {
     let mut y = 0usize;
     let mut x = 0usize;
 
@@ -58,7 +62,7 @@ fn print_map(map: &HashMap<(usize, usize), Node>) {
     }
 }
 
-fn print_map_distances(map: &HashMap<(usize, usize), Node>) {
+fn _print_map_distances(map: &NodeMap) {
     let mut y = 0usize;
     let mut x = 0usize;
 
@@ -73,7 +77,29 @@ fn print_map_distances(map: &HashMap<(usize, usize), Node>) {
     }
 }
 
-fn visit_node(queue: &mut Queue<(usize, usize, u32)>, map: &mut HashMap<(usize, usize), Node>) {
+fn _print_map_insides(map: &NodeMap) {
+    let mut y = 0usize;
+    let mut x = 0usize;
+
+    while let Some(n) = map.get(&(x, y)) {
+        let c: char = match n.inside {
+            Some(i) => match i {
+                true => 'I',
+                false => 'O',
+            },
+            None => n.pipe,
+        };
+        print!("{}", c);
+        x += 1;
+        if map.get(&(x, y)).is_none() {
+            println!("");
+            x = 0;
+            y += 1;
+        }
+    }
+}
+
+fn visit_node(queue: &mut Queue<(usize, usize, u32)>, map: &mut NodeMap) {
     let t = queue.get();
     if t.is_none() {
         return;
@@ -95,9 +121,39 @@ fn visit_node(queue: &mut Queue<(usize, usize, u32)>, map: &mut HashMap<(usize, 
     }
 }
 
+fn calcuate_inside(x: usize, y: usize, map: &mut NodeMap, l: &Vec<(usize, usize)>) {
+    if l.contains(&(x, y)) {
+        return;
+    }
+
+    let r_map = map.clone();
+    if let Some(node) = map.get_mut(&(x, y)) {
+        if node.inside.is_some() {
+            return;
+        }
+
+        let consider_pipe = vec!['|', '7', 'F', 'S'];
+        let mut int = 0usize;
+        let mut dx = 1usize;
+
+        while let Some(n) = r_map.get(&(x + dx, y)) {
+            if consider_pipe.contains(&n.pipe) && l.contains(&(x + dx, y)) {
+                int += 1;
+            }
+            dx += 1;
+        }
+
+        if int % 2 == 0 {
+            node.inside = Some(false)
+        } else {
+            node.inside = Some(true)
+        }
+    }
+}
+
 fn main() {
     let mut start_node = (0usize, 0usize);
-    let mut map = HashMap::<(usize, usize), Node>::new();
+    let mut map = NodeMap::new();
     for (y, line) in io::stdin().lock().lines().enumerate() {
         for (x, c) in line.expect("Error parsing line").char_indices() {
             map.insert((x, y), Node::new(c));
@@ -177,6 +233,7 @@ fn main() {
     // println!("{:?}", &map);
     // print_map_distances(&map);
 
+    // bfs
     let mut queue = Queue::<(usize, usize, u32)>::new();
     queue.add((start_node.0, start_node.1, 0));
     while !queue.is_empty() {
@@ -184,7 +241,28 @@ fn main() {
     }
     // print_map_distances(&map);
 
-    let max_d = map.values().map(|n| n.d).max();
+    // calculate what's inside
+    let mut loop_nodes: Vec<(usize, usize)> = map
+        .clone()
+        .into_iter()
+        .filter(|(_, v)| v.d > 0)
+        .map(|(k, _)| k)
+        .collect();
 
-    println!("{:?}", max_d.unwrap());
+    loop_nodes.push((start_node.0, start_node.1));
+
+    for ((x, y), _) in map.clone() {
+        calcuate_inside(x, y, &mut map, &loop_nodes);
+    }
+    _print_map_insides(&map);
+
+    let max_d = map
+        .values()
+        .map(|n| n.d)
+        .max()
+        .expect("Map should have a max");
+    println!("{}", max_d);
+
+    let inside_count = map.values().filter(|n| n.inside.is_some_and(|n| n)).count();
+    println!("{}", inside_count);
 }
