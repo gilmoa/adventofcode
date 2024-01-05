@@ -132,7 +132,10 @@ fn calcuate_inside(x: usize, y: usize, map: &mut NodeMap, l: &Vec<(usize, usize)
             return;
         }
 
-        let consider_pipe = vec!['|', '7', 'F', 'S'];
+        // TODO
+        // Add 'S' if S should be either 7 or F, final version
+        // should find out what S is.
+        let consider_pipe = vec!['|', '7', 'F'];
         let mut int = 0usize;
         let mut dx = 1usize;
 
@@ -254,7 +257,7 @@ fn main() {
     for ((x, y), _) in map.clone() {
         calcuate_inside(x, y, &mut map, &loop_nodes);
     }
-    _print_map_insides(&map);
+    // _print_map_insides(&map);
 
     let max_d = map
         .values()
