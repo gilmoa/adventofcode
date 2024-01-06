@@ -1,3 +1,6 @@
 **/target
 *.exe
 *.pdb
+
+test*.txt
+input.txt
