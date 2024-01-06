@@ -65,14 +65,14 @@ fn get_distance(
     let mut d_x = x_max - x_min;
     let mut d_y = y_max - y_min;
 
-    for x in exp_x {
-        if (x_min..x_max).contains(x) {
+    for &x in exp_x {
+        if x > x_min && x < x_max {
             d_x += exp_factor - 1;
         }
     }
 
-    for y in exp_y {
-        if (y_min..y_max).contains(y) {
+    for &y in exp_y {
+        if y > y_min && y < y_max {
             d_y += exp_factor - 1;
         }
     }
