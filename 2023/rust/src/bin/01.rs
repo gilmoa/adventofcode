@@ -13,30 +13,44 @@ fn main() {
         ("nine", "ni9ne"),
     ]);
 
-    let mut total = 0;
+    let mut total1: u32 = 0;
+    let mut total2: u32 = 0;
+
     for line in std::io::stdin().lock().lines() {
         let mut cline = line.unwrap_or("".to_string());
+
+        let mut first = 0;
+        let mut last = 0;
+
+        for c in cline.trim().chars() {
+            if let Ok(i) = c.to_string().parse::<u32>() {
+                if first == 0 {
+                    first = i
+                }
+                last = i
+            }
+        }
+
+        total1 += first * 10 + last;
 
         for (l, v) in &litteraltonumber {
             cline = cline.replace(l, v);
         }
 
-        let mut first: Option<i32> = None;
-        let mut last: Option<i32> = None;
+        first = 0;
+
         for c in cline.trim().chars() {
-            if let Ok(i) = c.to_string().parse::<i32>() {
-                if first == None {
-                    first = Some(i)
+            if let Ok(i) = c.to_string().parse::<u32>() {
+                if first == 0 {
+                    first = i
                 }
-                last = Some(i)
+                last = i
             }
         }
 
-        let ltotal = first.unwrap_or(0) * 10 + last.unwrap_or(0);
-
-        total += ltotal;
-
-        println!("{}. {:?}, {:?} = {}", cline, first, last, ltotal)
+        total2 += first * 10 + last;
     }
-    println!("{}", total)
+
+    println!("{}", total1);
+    println!("{}", total2);
 }
