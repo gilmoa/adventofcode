@@ -2,5 +2,5 @@
 *.exe
 *.pdb
 
-test*.txt
-input.txt
+**/_inputs
+**/_tests
