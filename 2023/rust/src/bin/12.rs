@@ -1,12 +1,7 @@
-use std::io;
-
-fn line_from_groups(group: &Vec<usize>) -> String {
-    group
-        .iter()
-        .map(|&x| "#".repeat(x))
-        .collect::<Vec<String>>()
-        .join(".")
-}
+use std::{
+    io::{self, BufRead},
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 fn reduce_line(l: &String) -> String {
     let mut r = "".to_string();
@@ -21,48 +16,73 @@ fn reduce_line(l: &String) -> String {
     r
 }
 
-fn perm(s: String, k: &Vec<char>, l: usize, t: usize, r: &mut Vec<String>) {
-    if l < t {
-        for &ch in k {
-            perm(s.clone() + ch.to_string().as_str(), k, l + 1, t, r);
-        }
-    } else {
-        r.push(s)
-    }
-}
-
-fn get_permutations(l: &String) -> Vec<String> {
-    let mut r: Vec<String> = Vec::new();
-    let positions: Vec<usize> = l
-        .char_indices()
-        .filter(|(_, ch)| *ch == '?')
-        .map(|(i, _)| i)
-        .collect();
-
-    let mut permutations: Vec<String> = Vec::new();
-    perm(
-        "".to_string(),
-        &vec!['.', '#'],
-        0,
-        positions.len(),
-        &mut permutations,
-    );
-
-    for perm in permutations {
-        let mut s = l.clone();
-        for (ch, i) in perm.chars().zip(positions.clone()) {
-            // println!("Replacing {ch} at {i}");
-            s.replace_range(i..i + 1, ch.to_string().as_str());
-        }
-        r.push(s);
+fn count_valid_permutations(s: String, g: Vec<usize>) -> usize {
+    if s.len() < 1 {
+        return match g.len() < 1 {
+            true => 1,
+            false => 0,
+        };
     }
 
-    r
+    if g.len() < 1 {
+        return match s.contains("#") {
+            true => 0,
+            false => 1,
+        };
+    }
+
+    // println!("{s}, {:?}", g);
+    if s.len() < g.len() {
+        return 0;
+    }
+
+    if s.len() < g.clone().into_iter().sum::<usize>() {
+        return 0;
+    }
+
+    if s.len() < g.clone().into_iter().sum::<usize>() - g.len() {
+        return 0;
+    }
+
+    let c_g = g[0];
+    let is_group = !s[..c_g].to_string().contains(".");
+
+    if c_g == s.len() {
+        return match is_group {
+            true => 1,
+            false => 0,
+        };
+    }
+
+    let c_ch = &s[..1];
+
+    if c_ch == "." {
+        return count_valid_permutations(s[1..].to_string(), g.clone());
+    }
+
+    if c_ch == "?" {
+        let a = count_valid_permutations(".".to_string() + &s[1..], g.clone());
+        let b = count_valid_permutations("#".to_string() + &s[1..], g.clone());
+        return a + b;
+    }
+
+    if c_ch == "#" {
+        if is_group && &s[c_g..c_g + 1] != "#" {
+            return count_valid_permutations(s[c_g + 1..].to_string(), g[1..].to_vec());
+        } else {
+            return 0;
+        }
+    }
+
+    count_valid_permutations(s[1..].to_string(), g.clone())
 }
 
 fn main() {
     let mut t_permutations: usize = 0;
-    for line in io::stdin().lines() {
+
+    let start = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+
+    for (i, line) in io::stdin().lock().lines().enumerate() {
         let line = line.expect("Should always parse a line");
         let mut s_line = line.split_whitespace();
         let springs = s_line
@@ -78,24 +98,13 @@ fn main() {
             .map(|n| n.parse::<usize>().unwrap())
             .collect();
 
-        // groups.repeat(5);
-
-        let group_line = line_from_groups(&groups) + ".";
-        let permutations = get_permutations(&springs);
-        // println!("{:?}", &group_line);
-        // println!("{:?}", &permutations);
-
-        // let mut tmp = 0usize;
-        for perm in permutations {
-            // println!("{}", reduce_line(&perm));
-            if reduce_line(&perm) == group_line {
-                // tmp += 1;
-                t_permutations += 1;
-            }
-        }
-
-        // println!("{}", tmp);
+        let c_permutations = count_valid_permutations(springs, groups);
+        println!("{i} = {c_permutations}");
+        t_permutations += c_permutations;
     }
+
+    let end = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    dbg!(end - start);
 
     println!("{t_permutations}");
 }
