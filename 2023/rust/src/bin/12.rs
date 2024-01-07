@@ -29,16 +29,11 @@ fn count_valid_permutations(s: String, g: Vec<usize>, c: &mut HashMap<String, us
         };
     }
 
-    // println!("{s}, {:?}", g);
     if s.len() < g.len() {
         return 0;
     }
 
     if s.len() < g.clone().into_iter().sum::<usize>() {
-        return 0;
-    }
-
-    if s.len() < g.clone().into_iter().sum::<usize>() - g.len() {
         return 0;
     }
 
