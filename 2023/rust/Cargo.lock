@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "rust"
-version = "0.1.0"
+name = "aoc"
+version = "2023.12.0"
