@@ -86,9 +86,9 @@ fn main() {
     let mut galaxies: Vec<(usize, usize)> = Vec::new();
 
     for (y, line) in io::stdin().lines().enumerate() {
-        let c_line = line.expect("Should have valid lines");
-        width = min(width, c_line.len());
-        for (x, ch) in c_line.trim().char_indices() {
+        let line = line.expect("Should have valid lines");
+        width = min(width, line.len());
+        for (x, ch) in line.trim().char_indices() {
             grid.push(ch);
             if ch == '#' {
                 galaxies.push((x, y))
