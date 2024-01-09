@@ -1,5 +1,8 @@
 use core::fmt::Debug;
-use std::io::{self, BufRead};
+use std::{
+    cmp::max,
+    io::{self, BufRead},
+};
 
 fn is_reflected<T: Clone + Debug + PartialEq>(s: Vec<T>) -> bool {
     let s1: Vec<T> = s.iter().cloned().rev().collect();
@@ -9,7 +12,7 @@ fn is_reflected<T: Clone + Debug + PartialEq>(s: Vec<T>) -> bool {
     s == s1
 }
 
-fn get_reflection(map: &Vec<String>) -> usize {
+fn get_reflection(map: &Vec<String>, strict: usize) -> usize {
     if map.len() < 2 {
         return 0;
     }
@@ -21,6 +24,7 @@ fn get_reflection(map: &Vec<String>) -> usize {
         // println!("+++++++ checking reflection at {x}");
 
         let mut x_valid = true;
+        let mut smudges = 0;
         for s in map {
             let r_len = match h_len < x {
                 true => s.len() - x,
@@ -32,8 +36,28 @@ fn get_reflection(map: &Vec<String>) -> usize {
 
             // println!("checking {s1} with {r_len}");
             if !is_reflected(s1.into()) {
-                x_valid = false;
-                break;
+                if strict > 0 && smudges < 2 {
+                    // println!("Checking {s1} diff at {x}");
+                    // println!("smudges {smudges}");
+                    if let Some(d) = diff(
+                        s1[..r_len].chars().collect::<Vec<char>>(),
+                        s1[r_len..].chars().rev().collect::<Vec<char>>(),
+                    ) {
+                        if d > strict {
+                            x_valid = false;
+                            break;
+                        } else {
+                            smudges += d;
+                            if smudges > 1 {
+                                x_valid = false;
+                                break;
+                            }
+                        }
+                    }
+                } else {
+                    x_valid = false;
+                    break;
+                }
             }
         }
         if x_valid {
@@ -45,30 +69,33 @@ fn get_reflection(map: &Vec<String>) -> usize {
     r
 }
 
-fn get_smudge<T: PartialEq>(a: Vec<T>, b: Vec<T>) -> Option<usize> {
+fn diff<T: PartialEq + Debug>(a: Vec<T>, b: Vec<T>) -> Option<usize> {
     if a.len() != b.len() {
         return None;
     }
 
-    let mut r = None;
+    let mut r = 0;
     for x in 0..a.len() {
         if a[x] != b[x] {
-            if r.is_none() {
-                r = Some(x)
-            } else {
-                return None;
-            }
+            r += 1;
         }
     }
-    r
+
+    // println!("DIFF {a:?} and {b:?} = {r:?}");
+
+    match r {
+        0 => None,
+        x => Some(x),
+    }
 }
 
 fn main() {
     let mut rows: Vec<String> = Vec::new();
 
     let mut total1: usize = 0;
+    let mut total2: usize = 0;
 
-    let mut counter: usize = 1;
+    let mut _counter: usize = 1;
 
     for line in io::stdin().lock().lines() {
         let line = line.expect("Should always get a line");
@@ -94,58 +121,39 @@ fn main() {
             //
             // part 1
             //
-            let ref_r = get_reflection(&rows);
-            println!("{counter:03} reflection at ROW {ref_r}");
+            let ref_r = get_reflection(&rows, 0);
+            // println!("{counter:03} reflection at ROW {ref_r}");
 
-            let ref_c = get_reflection(&cols);
-            println!("{counter:03} reflection at COL {ref_c}");
+            let ref_c = get_reflection(&cols, 0);
+            // println!("{counter:03} reflection at COL {ref_c}");
 
             let total = (ref_r) + 100 * (ref_c);
 
             total1 += total;
-            println!("=={counter:03} total {total}=");
+            // println!("=={counter:03} total {total}=");
 
             //
             // part 2
             //
+            let mut ref_r2 = get_reflection(&rows, 1);
+            ref_r2 = max(ref_r2 - ref_r, 0);
+            // println!("{counter:03} reflection at ROW {ref_r2}");
 
-            let mut smudge: Option<(usize, usize)> = None;
-            for (i, s) in rows.windows(2).enumerate() {
-                println!("Comparing");
-                println!("{:?}", s[0]);
-                println!("{:?}", s[1]);
-                let x_smudge = get_smudge(s[0].clone().into(), s[1].clone().into());
+            let mut ref_c2 = get_reflection(&cols, 1);
+            ref_c2 = max(ref_c2 - ref_c, 0);
 
-                if let Some(x) = x_smudge {
-                    smudge = Some((x, i));
-                    break;
-                }
-            }
+            // println!("{counter:03} reflection at COL {ref_c2}");
 
-            if smudge.is_none() {
-                for (i, s) in cols.windows(2).enumerate() {
-                    println!("Comparing");
-                    println!("{:?}", s[0]);
-                    println!("{:?}", s[1]);
-                    let x_smudge = get_smudge(s[0].clone().into(), s[1].clone().into());
+            let total = (ref_r2) + 100 * (ref_c2);
 
-                    if let Some(x) = x_smudge {
-                        smudge = Some((i, x));
-                        break;
-                    }
-                }
-            }
-
-            if smudge.is_none() {
-                panic!("{counter:03} Should always have one smudge!")
-            }
-
-            println!("{counter:03} Found smudge at {smudge:?}");
+            total2 += total;
+            // println!("=={counter:03} total {total}=");
 
             rows.clear();
-            counter += 1;
+            _counter += 1;
         }
     }
 
     println!("{total1}");
+    println!("{total2}");
 }
