@@ -45,7 +45,28 @@ fn get_reflection(map: &Vec<String>) -> usize {
     r
 }
 
+fn smudge<T: PartialEq>(a: Vec<T>, b: Vec<T>) -> Option<usize> {
+    if a.len() != b.len() {
+        return None;
+    }
+
+    let mut r = None;
+    for x in 0..a.len() {
+        if a[x] != b[x] {
+            if r.is_none() {
+                r = Some(x)
+            } else {
+                return None;
+            }
+        }
+    }
+    r
+}
+
 fn main() {
+    let diff = smudge("ciao".into(), "ciao".into());
+    println!("{:?}", diff);
+
     let mut rows: Vec<String> = Vec::new();
 
     let mut total1: usize = 0;
@@ -68,10 +89,14 @@ fn main() {
                 }
             }
 
-            println!("======{counter:03}======");
-            for x in &rows {
-                println!("{counter:03} {x}");
-            }
+            // println!("======{counter:03}======");
+            // for x in &rows {
+            //     println!("{counter:03} {x}");
+            // }
+
+            //
+            // part 1
+            //
             let ref_r = get_reflection(&rows);
             println!("{counter:03} reflection at ROW {ref_r}");
 
@@ -82,6 +107,16 @@ fn main() {
 
             total1 += total;
             println!("=={counter:03} total {total}=");
+
+            //
+            // part 2
+            //
+            for s in rows.windows(2) {
+                println!("Comparing");
+                println!("{:?}", s[0]);
+                println!("{:?}", s[1]);
+            }
+
             rows.clear();
             counter += 1;
         }
