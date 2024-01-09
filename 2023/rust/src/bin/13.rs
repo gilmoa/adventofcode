@@ -45,7 +45,7 @@ fn get_reflection(map: &Vec<String>) -> usize {
     r
 }
 
-fn smudge<T: PartialEq>(a: Vec<T>, b: Vec<T>) -> Option<usize> {
+fn get_smudge<T: PartialEq>(a: Vec<T>, b: Vec<T>) -> Option<usize> {
     if a.len() != b.len() {
         return None;
     }
@@ -64,9 +64,6 @@ fn smudge<T: PartialEq>(a: Vec<T>, b: Vec<T>) -> Option<usize> {
 }
 
 fn main() {
-    let diff = smudge("ciao".into(), "ciao".into());
-    println!("{:?}", diff);
-
     let mut rows: Vec<String> = Vec::new();
 
     let mut total1: usize = 0;
@@ -111,11 +108,39 @@ fn main() {
             //
             // part 2
             //
-            for s in rows.windows(2) {
+
+            let mut smudge: Option<(usize, usize)> = None;
+            for (i, s) in rows.windows(2).enumerate() {
                 println!("Comparing");
                 println!("{:?}", s[0]);
                 println!("{:?}", s[1]);
+                let x_smudge = get_smudge(s[0].clone().into(), s[1].clone().into());
+
+                if let Some(x) = x_smudge {
+                    smudge = Some((x, i));
+                    break;
+                }
             }
+
+            if smudge.is_none() {
+                for (i, s) in cols.windows(2).enumerate() {
+                    println!("Comparing");
+                    println!("{:?}", s[0]);
+                    println!("{:?}", s[1]);
+                    let x_smudge = get_smudge(s[0].clone().into(), s[1].clone().into());
+
+                    if let Some(x) = x_smudge {
+                        smudge = Some((i, x));
+                        break;
+                    }
+                }
+            }
+
+            if smudge.is_none() {
+                panic!("{counter:03} Should always have one smudge!")
+            }
+
+            println!("{counter:03} Found smudge at {smudge:?}");
 
             rows.clear();
             counter += 1;
