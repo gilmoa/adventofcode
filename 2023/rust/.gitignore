@@ -1,6 +1,3 @@
 **/target
 *.exe
 *.pdb
-
-**/_inputs
-**/_tests
